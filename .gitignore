@@ -1,0 +1,4 @@
+organize_data_files.py
+*.Rproj*
+scripts/varstore/*
+*.RData*
