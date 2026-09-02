@@ -10,7 +10,7 @@ source("3_JAGS_run_estimation.R")
 # Step 4: Run predictive validity check.
 source("4_predictive_validity.R")
 
-# Step 5: Run K-Fold Validation
+# Step 5: Run K-Fold Validation (this will take more time)
 source("5_k_fold_validation.R")
 
 # Step 6: Analyze and visualize results
