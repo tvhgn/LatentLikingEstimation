@@ -18,17 +18,17 @@ ifelse(!dir.exists(figures_path),
 #### Predictive validity ####
 
 # Correlations across stages
-df_ranked <- liking_stages_df %>%
+ranked_df <- liking_stages_df %>%
   # filter(Subject != "sub-n23" & Subject != "sub-n12") %>% # filter outliers
   group_by(Subject) %>%
   mutate(Rating_Score=rank(-Rating_Score),
          Latent_Score=rank(-Latent_Score))
 
-cor_rat_ranked <- cor.test(df_ranked$Rating_Score, df_ranked$Ranking_Score,
+cor_rat_ranked <- cor.test(ranked_df$Rating_Score, ranked_df$Ranking_Score,
                            method = 'spearman')
-cor_rat_latent <- cor.test(df_ranked$Rating_Score, df_ranked$Latent_Score,
+cor_rat_latent <- cor.test(ranked_df$Rating_Score, ranked_df$Latent_Score,
                            method = 'spearman')
-cor_lat_ranked <- cor.test(df_ranked$Latent_Score, df_ranked$Ranking_Score,
+cor_lat_ranked <- cor.test(ranked_df$Latent_Score, ranked_df$Ranking_Score,
                            method = 'spearman')
 
 
@@ -89,7 +89,7 @@ cor_summary <- cor_samples_long %>%
             sd = sd(Sample_r))
 
 # Inspect outliers
-liking_stages_outliers <- df_ranked %>%
+liking_stages_outliers <- ranked_df %>%
   filter(Subject == "sub-n23" | Subject == "sub-n12") %>%
   group_by(Subject) %>%
   summarize(cor_rat_lat = cor(Rating_Score, Latent_Score),

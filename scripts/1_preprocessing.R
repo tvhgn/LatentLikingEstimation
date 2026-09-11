@@ -27,9 +27,6 @@ datasets <- list()
 
 # Loop across participants
 for (i in 1:n_subjects){
-  # Initialize list which will contain datafiles for this specific participant
-  sub_beh_data <- list()
-  
   # Path for subject's folder containing behavioral data collected during MRI runs
   sub_data_path <- file.path(subject_dirs[i], "mri_runs_behavioral")
   
@@ -56,8 +53,7 @@ for (i in 1:n_subjects){
   sub_all_data <- sub_all_data[sub_all_data[, last_col]!= "" & sub_all_data[, (last_col-1)]!="", ]
   
   # Store in list for all participants
-  new_subject <- subject_dirs_rel[i]
-  datasets[[new_subject]] <- sub_all_data
+  datasets[[subject_dirs_rel[i]]] <- sub_all_data
   
 }
 
@@ -65,8 +61,8 @@ for (i in 1:n_subjects){
 matrices <- list() # initialize list
 for (i in 1:n_subjects){
   subject <- subject_dirs_rel[i]
-  sub_dataset <- datasets[[subject]]
-  matrices[[subject]] <- create_matrices(sub_dataset) # reusable function from utils/jags_functions.R
+  sub_all_data <- datasets[[subject]]
+  matrices[[subject]] <- create_matrices(sub_all_data) # reusable function from utils/jags_functions.R
 }
 
 

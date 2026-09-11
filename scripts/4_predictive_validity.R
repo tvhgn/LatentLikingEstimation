@@ -7,7 +7,7 @@ library(tidyr)
 
 # initialize variables
 subs_validity <- list()
-#subs_validity_test <- list()
+
 n_samples <- jags_output_subs$`sub-e01`$sample * nChains
 cor_samples_df <- data.frame("sub-e01"=rep(NA, n_samples)) # will contain correlations across model samples
 liking_stages_df <- matrix(NA, 
@@ -53,7 +53,7 @@ for (i in 1:n_subjects){
   liking_stages_df[i_start:i_end, 5] <- subject_ranking
   
   # Create csv file with data on subject
-  df_subject <- data.frame(
+  subject_df <- data.frame(
     label = 1:36,
     rating = subject_rating,
     latent_liking = subject_latent,
@@ -67,7 +67,7 @@ for (i in 1:n_subjects){
          dir.create(file.path(results_dir, subject_string)),
          "Directory Exists")
   # Write csv file
-  write_xlsx(df_subject, path=save_liking_path)
+  write_xlsx(subject_df, path=save_liking_path)
   
   # Store in dataframe
   cor_samples_df[subject_string] <- cor_samples

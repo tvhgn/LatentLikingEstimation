@@ -71,11 +71,11 @@ if (load_results == TRUE){
   for (S_i in 1:length(datasets)){
     # Get subject data
     subject_string <- subject_dirs_rel[S_i]
-    raw_data <- datasets[[subject_string]]
+    sub_all_data <- datasets[[subject_string]]
     
     for (fold in 1:k){
       # Create train and test datasets
-      data <- k_fold_dataloader(raw_data, fold, k)
+      data <- k_fold_dataloader(sub_all_data, fold, k)
       trainset <- data$train_data
       testset <- data$test_data
       # Prepare matrices for JAGS
