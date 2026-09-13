@@ -1,7 +1,4 @@
 # Necessary imports
-library(R2jags)
-library(runjags)
-library(writexl)
 library(bayestestR)
 library(tidyr)
 

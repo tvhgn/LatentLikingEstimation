@@ -32,26 +32,26 @@ cor_lat_ranked <- cor.test(ranked_df$Latent_Score, ranked_df$Ranking_Score,
                            method = 'spearman')
 
 
-# Convert to long format
-liking_stages_long <- liking_stages_df %>%
-  pivot_longer(cols=3:5, names_to = "liking_stage", values_to = "score") %>%
-  mutate(
-    liking_stage = case_match(liking_stage,
-                              "Rating_Score"~"Rating",
-                              "Latent_Score"~"Latent",
-                              "Ranking_Score"~"Ranking")
-  ) %>%
-  mutate(liking_stage = factor(liking_stage,
-                               levels=c("Rating", "Latent", "Ranking")))
-
-
-
-# violin plot
-liking_stages_long %>% filter(liking_stage!="Ranking") %>%
-  ggplot(aes(x=liking_stage, y = score, fill=liking_stage)) +
-  geom_violin() +
-  geom_jitter(width=0.05, height=0.2, alpha=0.1) +
-  theme_classic()
+# # Convert to long format
+# liking_stages_long <- liking_stages_df %>%
+#   pivot_longer(cols=3:5, names_to = "liking_stage", values_to = "score") %>%
+#   mutate(
+#     liking_stage = case_match(liking_stage,
+#                               "Rating_Score"~"Rating",
+#                               "Latent_Score"~"Latent",
+#                               "Ranking_Score"~"Ranking")
+#   ) %>%
+#   mutate(liking_stage = factor(liking_stage,
+#                                levels=c("Rating", "Latent", "Ranking")))
+# 
+# 
+# 
+# # violin plot
+# liking_stages_long %>% filter(liking_stage!="Ranking") %>%
+#   ggplot(aes(x=liking_stage, y = score, fill=liking_stage)) +
+#   geom_violin() +
+#   geom_jitter(width=0.05, height=0.2, alpha=0.1) +
+#   theme_classic()
 
 # Create long format of dataframe
 cor_samples_long <- cor_samples_df %>%
@@ -82,6 +82,7 @@ pred_val_plot <- ggplot(cor_samples_long, aes(x=Sample_r, colour=Subject, fill=S
     axis.text = element_text(size = 14)) 
 
 ggsave(filename = "predictive_validity.png", plot=pred_val_plot, path = figures_path, units = "px", dpi = 300)
+
 # Summary df
 cor_summary <- cor_samples_long %>%
   group_by(Subject) %>%

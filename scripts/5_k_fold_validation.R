@@ -1,38 +1,4 @@
-#' Perform k-fold cross-validation with JAGS model on multiple subject datasets
-#'
-#' This script performs k-fold cross-validation to evaluate a Bayesian logistic regression model
-#' using JAGS on a collection of subject datasets. It allows loading previous cross-validation results 
-#' or re-running the full k-fold procedure on the provided datasets.
-#' 
-#' The processing includes:
-#' - Loading necessary libraries and user-defined JAGS utility functions.
-#' - Setting model parameters (number of chains, samples, burn-in, adaptation) and k-fold parameters.
-#' - Loading datasets or previous cross-validation results.
-#' - For each subject dataset, running k-fold cross-validation by splitting the data 
-#'   into training and testing sets.
-#' - Creating matrices for JAGS input, initializing chains, running the model in parallel.
-#' - Predicting responses and evaluating accuracy with confusion matrices.
-#' - Storing and saving accuracy results in a dataframe for later analysis.
-#' 
-#' @author [Tom van Hogen]
-#' @date [2026-08-31]
-#' 
-#' @details
-#' The JAGS model file used is "models/ranking_logregres_bin_reparam.txt". The number of paintings (stimuli) is fixed at 36.
-#' Parameters monitored in JAGS include "liking". The model by default uses 3 chains, 10,000 samples, 1,000 burn-in iterations, and 1,000 adaptation steps.
-#' Cross-validation uses 10 folds by default.
-
-#' @usage
-#' Run the script interactively. When prompted, specify whether to load previous results by typing "Y" or "N".
-#' If "N", the script runs the full k-fold validation process and saves the results.
-#'
-#' @return
-#' Saves a dataframe \code{df_acc} containing the accuracy results per subject and fold in "varstore/k_fold_val_df.RData".
-#' The dataframe contains columns: Subject (factor), Fold (factor), and Accuracy (numeric).
-#' 
-#' @note
-#' Requires external utility functions defined in "utils/jags_functions.R" for data preparation and model interaction.
-
+# Imports
 library(dplyr)
 library(ggplot2)
 library(scales)
