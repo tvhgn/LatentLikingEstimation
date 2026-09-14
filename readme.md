@@ -20,7 +20,7 @@ There are two options to follow:
     - Open the scripts folder.
     - You can either:
         - Run the .qmd file directly from RStudio.
-        - Open the .html file to view a rendered document containing code, explanation, and results.
+        - Open the .pdf file to view a rendered document containing code, explanation, and results.
     - Check the codebook.xlsx file for further information on each variable used in the scripts.
     
 
