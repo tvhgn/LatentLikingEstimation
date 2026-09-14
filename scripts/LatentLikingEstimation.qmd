@@ -1,7 +1,12 @@
 ---
 title: "Latent Liking Estimation"
 author: Tom van Hogen
-format: html
+format: 
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
 editor: visual
 execute: 
   include: TRUE
