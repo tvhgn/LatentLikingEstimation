@@ -3,6 +3,9 @@ title: "Latent Liking Estimation"
 author: Tom van Hogen
 format: html
 editor: visual
+execute: 
+  include: TRUE
+  echo: TRUE
 ---
 
 # Introduction
@@ -35,7 +38,7 @@ First we import the packages we need.
 
 ```{r}
 #| label: load-packages-functions
-#| include: FALSE
+#| message: FALSE
 
 library(dplyr)
 library(tidyr)
@@ -45,12 +48,9 @@ library(writexl)
 library(runjags)
 library(bayestestR)
 library(ggplot2)
-library(scales)
 library(caret)
-library(rstatix)
 library(ggpubr)
 library(effectsize)
-library(stringr)
 
 # Load functions
 source(file.path("utils","jags_functions.R"))
@@ -60,7 +60,6 @@ Then, we need to set up a couple of things. First of all, we need to specify the
 
 ```{r}
 #| label: setup-paths
-#| include: FALSE
 
 #### Get data file paths across all subjects ####
 # Location of data files
@@ -84,7 +83,6 @@ Then using the behavioral data files of each subject, we import these into separ
 
 ```{r}
 #| label: create-datasets
-#| include: FALSE
 #| cache: TRUE
 
 #### Pre-processing and preparation of the behavioral dataset ####
@@ -131,7 +129,6 @@ To aid readability, a function to create the matrices is sourced from *utils/jag
 
 ```{r}
 #| label: create-matrices
-#| include: FALSE
 #| cache: TRUE
 
 
@@ -147,7 +144,7 @@ Other preprocessing steps deal with the pre-mri liking data, and the final ranki
 
 ```{r}
 #| label: pre-post-mri-prepro
-#| include: FALSE
+#| message: FALSE
 #| cache: TRUE
 
 
@@ -191,7 +188,6 @@ Finally, we store all data in the *varstore* directory.
 
 ```{r}
 #| label: store-data
-#| include: FALSE
 
 # Store datasets
 save(datasets, file=datasets_var_path) 
@@ -206,7 +202,6 @@ Before we can run the JAGS model, we need to set up important parameters, specif
 
 ```{r}
 #| label: jags-setup-init
-#| include: FALSE
 
 #### JAGS MODEL ####
 modelString <- "
@@ -257,7 +252,6 @@ It is time to run the model. We set the seed to 1234 and define a variable that 
 
 ```{r}
 #| label: set-output-var
-#| include: FALSE
 
 # set seed
 set.seed(1234)
@@ -266,61 +260,66 @@ set.seed(1234)
 jags_output_subs <- list()
 ```
 
-Next, we iterate over each subject and run the model on the matrices we created earlier and using the initial values we created. This will take some time to finish running. We print out the results of the first participant to give an example of the model output.
+Next, we iterate over each subject and run the model on the matrices we created earlier and using the initial values we created. This will take some time to finish running. We print out the results of the first participant to give an example of the model output. If you have run it before, there is an option to load the previous results. We will load it here.
 
 ```{r}
 #| label: jags-run
-#| include: FALSE
-#| echo: FALSE
+#| message: FALSE
 #| cache: TRUE
 
-# iterate over subject
-for (i in 1:n_subjects){
-  # Pick subject and create string object
-  subject <- subject_dirs_rel[i]
-  
-  # Print status message
-  print(paste("Running JAGS for:", subject))
-  
-  # Retrieve subject's data matrices, which will be used as input data.
-  M_pref <- matrices[[subject]]$M_pref
-  M_n <- matrices[[subject]]$M_n
-  
-  
-  
-  # Prepare the data
-  dataList <- list(y = M_pref,
-                   n = M_n,
-                   nPaintings = 36)
-  
-  # Model parameters
-  pars <- c("liking")
-  samples <- 10000
-  burnin <- 1000
-  nAdapt <- 1000
-  
-  output <- run.jags(model="models/ranking_logregres_bin_reparam.txt",
-                     monitor=pars,
-                     data=dataList,
-                     n.chains = nChains,
-                     inits=inits,
-                     burnin=burnin,
-                     sample=samples,
-                     adapt=nAdapt,
-                     method="rjparallel"
-  )
-  
-  # Store outputs
-  jags_output_subs[[subject]] <- output
-  
+# Set parameter for loading previous results, or re-running the code
+load_jags <- TRUE
+
+if (load_jags==TRUE){
+  load(file.path("varstore", "jags_output_all_subs.RData"))
+} else {
+  # iterate over subject
+  for (i in 1:n_subjects){
+    # Pick subject and create string object
+    subject <- subject_dirs_rel[i]
+    
+    # Print status message
+    print(paste("Running JAGS for:", subject))
+    
+    # Retrieve subject's data matrices, which will be used as input data.
+    M_pref <- matrices[[subject]]$M_pref
+    M_n <- matrices[[subject]]$M_n
+    
+    
+    
+    # Prepare the data
+    dataList <- list(y = M_pref,
+                     n = M_n,
+                     nPaintings = 36)
+    
+    # Model parameters
+    pars <- c("liking")
+    samples <- 10000
+    burnin <- 1000
+    nAdapt <- 1000
+    
+    output <- run.jags(model="models/ranking_logregres_bin_reparam.txt",
+                       monitor=pars,
+                       data=dataList,
+                       n.chains = nChains,
+                       inits=inits,
+                       burnin=burnin,
+                       sample=samples,
+                       adapt=nAdapt,
+                       method="rjparallel"
+    )
+    
+    # Store outputs
+    jags_output_subs[[subject]] <- output
+    
+  }
 }
 ```
 
-Let us examine the result from the first subject.
+Let us examine the result from the first subject, just to see the kind of output we get.
 
 ```{r}
 #| label: jags-result-show
-#| include: TRUE
 
 jags_output_subs$`sub-e01`
 ```
@@ -331,10 +330,12 @@ Finally, we save the data in the *varstore* directory under filename *jags_outpu
 
 ```{r}
 #| label: store-jags-output
-#| include: FALSE
 
 # Save the data to local variable
-save(jags_output_subs, file=file.path("varstore", "jags_output_all_subs.RData"))
+if (load_jags==FALSE){
+  save(jags_output_subs, file=file.path("varstore", "jags_output_all_subs.RData"))
+}
+
 ```
 
 # 4 Model Performance Check
@@ -349,7 +350,6 @@ We do some set-up and initialization. Also creating folders if they do not alrea
 
 ```{r}
 #| label: predval-setup-init
-#| include: FALSE
 
 # initialize variables
 subs_validity <- list() # contains per subject information on the pred. val. posterior distribution.
@@ -376,8 +376,7 @@ Then, we iterate over each subject and correlate each posterior sample of the la
 
 ```{r}
 #| label: predval-run
-#| include: FALSE
-#| echo: FALSE
+#| message: FALSE
 #| cache: TRUE
 
 # Loop across subjects
@@ -450,7 +449,6 @@ Lastly, we preprocess *liking_stages_df* for a later stage.
 
 ```{r}
 #| label: prepro-df
-#| include: FALSE
 
 # Transform liking scores matrix to dataframe, add column names, and factorize
 liking_stages_df <- as.data.frame(liking_stages_mat)
@@ -475,7 +473,6 @@ We start with setting up important parameters. The variable *acc_mat* is a matri
 
 ```{r}
 #| label: k-fold-setup
-#| include: FALSE
 
 
 # Set parameters
@@ -493,87 +490,93 @@ k <- 10 # number of folds
 acc_mat <- matrix(NA, nrow=length(datasets)*k, ncol = 3)
 ```
 
-Next, we run the k-fold validation procedure. This is a very lengthy process which can easily take up a couple of hours. Make sure to take that into account before running.
+Next, we run the k-fold validation procedure. This is a very lengthy process which can easily take up a couple of hours. Make sure to take that into account before running. If you have run it before, there is an option to load the previous results. We will load it here.
 
 ```{r}
 #| label: k-fold-run
-#| include: TRUE
-#| cache: TRUE
+#| message: false
+#| cache: true
 
-for (S_i in 1:length(datasets)){
-  # Get subject data
-  subject_string <- subject_dirs_rel[S_i]
-  sub_all_data <- datasets[[subject_string]]
-  
-  for (fold in 1:k){
-    # Create train and test datasets
-    data <- k_fold_dataloader(sub_all_data, fold, k)
-    trainset <- data$train_data
-    testset <- data$test_data
-    # Prepare matrices for JAGS
-    mats <- create_matrices(trainset)
-    M_pref <- mats$M_pref
-    M_n <- mats$M_n
-    # Initialize chains
-    set.seed(1234)
-    inits <- generate_initial_values(3)
-    # Train JAGS model
-    # Prepare the data
-    dataList <- list(y = M_pref,
-                     n = M_n,
-                     nPaintings = 36)
+# Set parameter to load previous results, or run k-fold validation procedure
+load_k_fold <- TRUE
+
+if (load_k_fold==TRUE){
+  load(file.path("varstore", "k_fold_val_df.RData"))
+} else {
+  for (S_i in 1:length(datasets)){
+    # Get subject data
+    subject_string <- subject_dirs_rel[S_i]
+    sub_all_data <- datasets[[subject_string]]
     
-    # Print message to console
-    cat(paste("Running fold", fold, "for", subject_string, "\n\n"))
-    # Run JAGS
-    output <- run.jags(model="models/ranking_logregres_bin_reparam.txt",
-                       monitor=pars,
-                       data=dataList,
-                       n.chains = nChains,
-                       inits=inits,
-                       burnin=burnin,
-                       sample=samples,
-                       adapt=nAdapt,
-                       silent.jags = TRUE,
-                       method="rjparallel"
-    )
-    # Use JAGS model to predict
-    # Get liking scores
-    latent_liking <- as.numeric(output$summary$statistics[,'Mean'])
-    # then predict
-    preds_df <- predict_response(testset, latent_liking) # Get predictions
-    # Evaluate and store results
-    conf_mat <- confusionMatrix(preds_df$pred, preds_df$preferredStim) # Get accuracy and related measures
-    mat_index_start <- S_i * k - (k-1)
-    mat_index_current <- mat_index_start + (fold-1)
-    acc_mat[mat_index_current,] <- c(subject_string,
-                                     fold,
-                                     as.numeric(conf_mat$overall["Accuracy"]))
-    
+    for (fold in 1:k){
+      # Create train and test datasets
+      data <- k_fold_dataloader(sub_all_data, fold, k)
+      trainset <- data$train_data
+      testset <- data$test_data
+      # Prepare matrices for JAGS
+      mats <- create_matrices(trainset)
+      M_pref <- mats$M_pref
+      M_n <- mats$M_n
+      # Initialize chains
+      set.seed(1234)
+      inits <- generate_initial_values(3)
+      # Train JAGS model
+      # Prepare the data
+      dataList <- list(y = M_pref,
+                       n = M_n,
+                       nPaintings = 36)
+      
+      # Print message to console
+      cat(paste("Running fold", fold, "for", subject_string, "\n\n"))
+      # Run JAGS
+      output <- run.jags(model="models/ranking_logregres_bin_reparam.txt",
+                         monitor=pars,
+                         data=dataList,
+                         n.chains = nChains,
+                         inits=inits,
+                         burnin=burnin,
+                         sample=samples,
+                         adapt=nAdapt,
+                         silent.jags = TRUE,
+                         method="rjparallel"
+      )
+      # Use JAGS model to predict
+      # Get liking scores
+      latent_liking <- as.numeric(output$summary$statistics[,'Mean'])
+      # then predict
+      preds_df <- predict_response(testset, latent_liking) # Get predictions
+      # Evaluate and store results
+      conf_mat <- confusionMatrix(preds_df$pred, preds_df$preferredStim) # Get accuracy and related measures
+      mat_index_start <- S_i * k - (k-1)
+      mat_index_current <- mat_index_start + (fold-1)
+      acc_mat[mat_index_current,] <- c(subject_string,
+                                       fold,
+                                       as.numeric(conf_mat$overall["Accuracy"]))
+      
+    }
   }
 }
-
 ```
 
 Then, transform the matrix to a dataframe and store the results.
 
 ```{r}
 #| label: k-fold-save
-#| include: TRUE
-
-# Convert to dataframe and save
-df_k_fold_acc <- data.frame(acc_mat)
-colnames(df_k_fold_acc) <- c("Subject", "Fold", "Accuracy") # name columns
-
-# Factorize variables
-df_k_fold_acc <- df_k_fold_acc %>%
-  mutate(Subject = factor(Subject),
-         Fold = factor(Fold),
-         Accuracy = as.numeric(Accuracy))
-
 
 # Store results
-save(df_k_fold_acc, file=file.path("varstore", "k_fold_val_df.RData"))
+if (load_k_fold==FALSE){
+  # Convert to dataframe and save
+  df_k_fold_acc <- data.frame(acc_mat)
+  colnames(df_k_fold_acc) <- c("Subject", "Fold", "Accuracy") # name columns
+  
+  # Factorize variables
+  df_k_fold_acc <- df_k_fold_acc %>%
+    mutate(Subject = factor(Subject),
+           Fold = factor(Fold),
+           Accuracy = as.numeric(Accuracy))
+  
+  save(df_k_fold_acc, file=file.path("varstore", "k_fold_val_df.RData"))
+}
 
 # Give example of results
 print(head(df_k_fold_acc))
@@ -587,7 +590,6 @@ First some basic setup.
 
 ```{r}
 #| label: analysis-setup
-#| include: FALSE
 
 
 # Create folder for data and figure storage
@@ -605,7 +607,8 @@ Important to note is that, with regards to the latent scores, the correlation he
 
 ```{r}
 #| label: predval-corrs
-#| include: FALSE
+#| warning: FALSE
+
 
 # Correlations across stages
 ranked_df <- liking_stages_df %>%
@@ -623,13 +626,20 @@ cor_lat_ranked <- cor.test(ranked_df$Latent_Score, ranked_df$Ranking_Score,
 
 ```
 
-The most interesting result relates to how well our model corresponds to the final ranking data. We find a strong and significant correlation, *r*(`{r} cor_lat_ranked$statistic`) = `{r} round(cor_lat_ranked$estimate, 2)`, *p* \< 0.001). This includes data of two outliers, which optionally can be filtered.
+The most interesting result relates to how well our model corresponds to the final ranking data. We find a strong and significant correlation, *r* = `{r} round(cor_lat_ranked$estimate, 2)`, *p* \< 0.001). This includes data of two outliers, which optionally can be filtered.
 
 As mentioned before, we can also examine the mean correlation based on the full posterior distributions. Let us first check the posterior distribution using a density plot.
 
 ```{r}
 #| label: predval-plot
-#| include: TRUE
+
+# Create long format of dataframe
+cor_samples_long <- cor_samples_df %>%
+  select(-"sub.e01") %>%
+  pivot_longer(cols=starts_with("sub-"),
+               names_to="Subject",
+               values_to="Sample_r") %>%
+  mutate(Subject= factor(Subject))
 
 # Create plot using ggplot
 pred_val_plot <- ggplot(cor_samples_long, aes(x=Sample_r, colour=Subject, fill=Subject)) +
@@ -657,7 +667,6 @@ We are going to quantify the correlation, and thus get a concrete measure of the
 
 ```{r}
 #| label: predval-post-corrs
-#| include: TRUE
 
 # Create long format of dataframe
 cor_samples_long <- cor_samples_df %>%
@@ -680,9 +689,9 @@ mean_corr_no_outliers <- mean(cor_samples_no_outliers$Sample_r)
 eti_ci_no_outliers <- ci(cor_samples_no_outliers$Sample_r, method = "ETI")
 ```
 
-As expected, we find a strong and significant correlation, *r* = `{r} round(mean_corr,2)`, 95%CI\[`{r}round(eti_ci$CI_low, 2)`, `{r}round(eti_ci$CI_high, 2)`\]. The credible interval is quite wide, due to the inclusion of outliers (which skews the distribution).
+As expected, we find a strong and significant correlation, *r* = `{r} round(mean_corr,2)`, 95%CI\[`{r} round(eti_ci$CI_low, 2)`, `{r} round(eti_ci$CI_high, 2)`\]. The credible interval is quite wide, due to the inclusion of outliers (which skews the distribution).
 
-Without outliers, we find, not surprisingly, a stronger and more significant correlation, *r* = `{r} round(mean_corr_no_outliers, 2)`, 95%CI\[`{r}round(eti_ci_no_outliers$CI_low, 2)`, `{r}round(eti_ci_no_outliers$CI_high, 2)`\].
+Without outliers, we find, not surprisingly, a stronger and more significant correlation, *r* = `{r} round(mean_corr_no_outliers, 2)`, 95%CI\[`{r} round(eti_ci_no_outliers$CI_low, 2)`, `{r} round(eti_ci_no_outliers$CI_high, 2)`\].
 
 We can conclude the model is very capable of predicting the final ranking of the paintings, based on incomplete preference data from the MRI experiment, regardless of outlier inclusion.
 
@@ -690,7 +699,6 @@ Let us further define a variable storing correlation statistics between liking s
 
 ```{r}
 #| label: predval-summary-outliers
-#| include: TRUE
 
 # Summary df
 cor_summary <- cor_samples_long %>%
@@ -719,7 +727,6 @@ Finally, we check the result from the k-fold validation procedure.
 
 ```{r}
 #| label: k-fold-val
-#| include: TRUE
 
 # Test mean accuracy for significance
 mean_k_fold_acc <- mean(df_k_fold_acc$Accuracy)
@@ -754,7 +761,7 @@ k_fold_plot
 
 ```
 
-The figure suggests an overall great performance of the model, with the accuracy differing significantly from chance and a large effect size (*M* = `{r} round(mean_k_fold_acc, 2)`, *SD =* `{r} round(sd_k_fold_acc, 2)`), *t*(`{r} k_fold_t_test$parameter`) = `{r}round(k_fold_t_test$statistic, 2),` *p* \< 0.001, Cohen's *d* = `{r} round(k_fold_effect$Cohens_d, 2)`. This suggests that the model is generalizable, as it is able to predict the painting preference for new trials.
+The figure suggests an overall great performance of the model, with the accuracy differing significantly from chance and a large effect size (*M* = `{r} round(mean_k_fold_acc, 2)`, *SD =* `{r} round(sd_k_fold_acc, 2)`), *t*(`{r} k_fold_t_test$parameter`) = `{r} round(k_fold_t_test$statistic, 2)`, *p* \< 0.001, Cohen's *d* = `{r} round(k_fold_effect$Cohens_d, 2)`. This suggests that the model is generalizable, as it is able to predict the painting preference for new trials.
 
 # Conclusion
 
